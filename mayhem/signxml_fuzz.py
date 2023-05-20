@@ -57,8 +57,8 @@ def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
     consumed_bytes = fdp.ConsumeString(fdp.remaining_bytes())
     # Skip empty documents
-    if not consumed_bytes:
-        return
+    #if not consumed_bytes:
+    #    return
     xml_str = '<?xml version="1.0"?><data>' + consumed_bytes + '</data>'
     try:
         root = etree.fromstring(xml_str)
