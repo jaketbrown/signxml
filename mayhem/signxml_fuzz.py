@@ -6,7 +6,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 with atheris.instrument_imports(include=['signxml']):
-    from signxml import XMLSigner
+    from signxml import XMLSigner, XMLVerifier
     from signxml.exceptions import InvalidInput, SignXMLException
 
 cert = """-----BEGIN CERTIFICATE-----
