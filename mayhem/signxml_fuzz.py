@@ -62,7 +62,8 @@ def TestOneInput(data):
     xml_str = '<?xml version="1.0"?><data>' + consumed_bytes + '</data>'
     try:
         root = etree.fromstring(xml_str)
-        XMLSigner().sign(root, key=key, cert=cert)
+        signed_root = XMLSigner().sign(root, key=key, cert=cert)
+        verified_data = XMLVerifier().verify(signed_root).signed_xml
     except (SignXMLException, InvalidInput, XMLSyntaxError):
         return
 
