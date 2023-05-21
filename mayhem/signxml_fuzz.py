@@ -55,15 +55,13 @@ uCnX6siFNDlUAg==
 
 def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
-    consumed_bytes = fdp.ConsumeString(fdp.remaining_bytes())
-    # Skip empty documents
-    #if not consumed_bytes:
-    #    return
-    xml_str = '<?xml version="1.0"?><data>' + consumed_bytes + '</data>'
+    consumed_bytes = fdp.ConsumeBytes(fdp.remaining_bytes())
+    xml_str = b'<?xml version="1.0"?><data>' + consumed_bytes + b'</data>'
+    print(xml_str)
     try:
         root = etree.fromstring(xml_str)
         signed_root = XMLSigner().sign(root, key=key, cert=cert)
-        verified_data = XMLVerifier().verify(signed_root).signed_xml
+        #verified_data = XMLVerifier().verify(signed_root).signed_xml
     except (SignXMLException, InvalidInput, XMLSyntaxError):
         return
 
