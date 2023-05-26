@@ -55,6 +55,7 @@ uCnX6siFNDlUAg==
 
 def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
+    flag = fdp.ConsumeInt(fdp.ConsumeIntInRange(0, 4))
     consumed_bytes = fdp.ConsumeBytes(fdp.remaining_bytes())
     xml_str = b'<?xml version="1.0"?><data>' + consumed_bytes + b'</data>'
     try:
