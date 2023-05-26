@@ -55,17 +55,18 @@ uCnX6siFNDlUAg==
 
 def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
-    ran = fdp.ConsumeInt(fdp.ConsumeIntInRange(0, 3))
+    ran = fdp.ConsumeInt(fdp.ConsumeIntInRange(0, 50))
     consumed_bytes = fdp.ConsumeBytes(fdp.remaining_bytes())
     try:
         xml_str = b'<?xml version="1.0"?><data>' + consumed_bytes + b'</data>'
         root = etree.fromstring(xml_str)
-        if ran == 0:
+        if ran % 2 == 0:
             XMLSigner().sign(root, key=key, cert=cert)
-        elif ran == 1:
             XMLSigner().sign(root, key=key, cert=cert, always_add_key_value=True)
         else:
             XMLSigner().sign(root, key=None, cert=cert, passphrase=b'testmepass')
+        signed_data = etree.tostring(root)
+        XMLVerifier().verify(signed_data)
     except (SignXMLException, InvalidInput, XMLSyntaxError):
         return
 
