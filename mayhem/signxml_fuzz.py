@@ -7,7 +7,7 @@ from lxml.etree import XMLSyntaxError
 
 with atheris.instrument_imports(include=['signxml']):
     from signxml import XMLSigner, XMLVerifier
-    from signxml.exceptions import InvalidInput, SignXMLException
+    from signxml.exceptions import SignXMLException
 
 cert = """-----BEGIN CERTIFICATE-----
 MIIEUTCCA7qgAwIBAgIBATANBgkqhkiG9w0BAQUFADCBrDELMAkGA1UEBhMCVVMx
@@ -53,22 +53,26 @@ rutqglc8uYV3R5i6V7SPp4ekAR3YGykOI9H5ujlHwA/PIifbF1+jkwvOxm+md7qh
 uCnX6siFNDlUAg==
 -----END PRIVATE KEY-----"""
 
+
 def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
-    ran = fdp.ConsumeInt(fdp.ConsumeIntInRange(0, 50))
-    consumed_bytes = fdp.ConsumeBytes(fdp.remaining_bytes())
+    ran = fdp.ConsumeIntInRange(0, 3)
+    xml_str = fdp.ConsumeBytes(fdp.remaining_bytes())
     try:
-        xml_str = b'<?xml version="1.0"?><data>' + consumed_bytes + b'</data>'
-        root = etree.fromstring(xml_str)
-        if ran % 2 == 0:
-            XMLSigner().sign(root, key=key, cert=cert)
-            XMLSigner().sign(root, key=key, cert=cert, always_add_key_value=True)
+        if ran == 0:
+            XMLSigner().sign(xml_str, key=key, cert=cert)
+            XMLVerifier().validate_schema(xml_str)
+        elif ran == 1:
+            signed = XMLSigner().sign(xml_str, key=key, cert=cert, always_add_key_value=True)
+            XMLVerifier().get_root(signed)
         else:
-            XMLSigner().sign(root, key=None, cert=cert, passphrase=b'testmepass')
-        signed_data = etree.tostring(root)
-        XMLVerifier().verify(signed_data)
-    except (SignXMLException, InvalidInput, XMLSyntaxError):
-        return
+            signed = XMLSigner().sign(xml_str, key=None, cert=cert, passphrase=b'testmepass')
+            signed_data = etree.tostring(signed)
+            XMLVerifier().verify(signed_data)
+    except Exception as e:
+        if isinstance(e, XMLSyntaxError) or isinstance(e, SignXMLException):
+            return
+        raise
 
 
 def main():
