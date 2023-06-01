@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-
+import io
 import sys
+import os
 import atheris
 from lxml import etree
-from lxml.etree import XMLSyntaxError
+from lxml.etree import XMLSyntaxError, DocumentInvalid
 
 with atheris.instrument_imports(include=['signxml']):
     from signxml import XMLSigner, XMLVerifier
@@ -58,20 +59,23 @@ def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
     ran = fdp.ConsumeIntInRange(0, 3)
     xml_str = fdp.ConsumeBytes(fdp.remaining_bytes())
+    xml_str = b'<?xml version="1.0"?><data>' + xml_str + b'</data>'
     try:
+        tree = etree.parse(io.BytesIO(xml_str))
+        data = tree.getroot()
         if ran == 0:
-            XMLSigner().sign(xml_str, key=key, cert=cert)
-            XMLVerifier().validate_schema(xml_str)
+            signed = XMLSigner().sign(data, key=key, cert=cert)
+            XMLVerifier().validate_schema(signed)
         elif ran == 1:
-            signed = XMLSigner().sign(xml_str, key=key, cert=cert, always_add_key_value=True)
+            signed = XMLSigner().sign(data, key=key, cert=cert, always_add_key_value=True)
             XMLVerifier().get_root(signed)
         else:
-            signed = XMLSigner().sign(xml_str, key=None, cert=cert, passphrase=b'testmepass')
+            signed = XMLSigner().sign(data, key=key, cert=cert)
             signed_data = etree.tostring(signed)
-            XMLVerifier().verify(signed_data)
-    except Exception as e:
-        if isinstance(e, XMLSyntaxError) or isinstance(e, SignXMLException):
-            return
+            XMLVerifier().verify(signed_data, ca_pem_file=os.path.dirname(os.path.abspath(__file__)) + '/example-ca.pem')
+    except (XMLSyntaxError, SignXMLException, DocumentInvalid):
+        return
+    except Exception:
         raise
 
 
