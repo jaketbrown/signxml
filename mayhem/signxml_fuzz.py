@@ -3,12 +3,12 @@ import io
 import sys
 import os
 import atheris
-from lxml import etree
-from lxml.etree import XMLSyntaxError, DocumentInvalid
-
 with atheris.instrument_imports(include=['signxml']):
     from signxml import XMLSigner, XMLVerifier
     from signxml.exceptions import SignXMLException
+    from lxml import etree
+    from lxml.etree import XMLSyntaxError, DocumentInvalid
+
 
 cert = """-----BEGIN CERTIFICATE-----
 MIIEUTCCA7qgAwIBAgIBATANBgkqhkiG9w0BAQUFADCBrDELMAkGA1UEBhMCVVMx
@@ -57,7 +57,7 @@ uCnX6siFNDlUAg==
 
 def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
-    ran = 2#fdp.ConsumeIntInRange(0, )
+    ran = fdp.ConsumeIntInRange(0, 3)
     xml_str = fdp.ConsumeBytes(fdp.remaining_bytes())
     xml_str = b'<?xml version="1.0"?><data>' + xml_str + b'</data>'
     try:
@@ -68,6 +68,11 @@ def TestOneInput(data):
             XMLVerifier().validate_schema(signed)
         elif ran == 1:
             signed = XMLSigner().sign(data, key=key, cert=cert, always_add_key_value=True)
+            XMLVerifier().get_root(signed)
+        elif ran == 2:
+            signed = XMLSigner().sign(data, key=key, cert=cert, always_add_key_value=False)
+            XMLVerifier().schemas()
+            XMLVerifier().get_root(signed)
             XMLVerifier().get_root(signed)
         else:
             signed = XMLSigner().sign(data, key=key, cert=cert)
