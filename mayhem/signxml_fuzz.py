@@ -57,7 +57,7 @@ uCnX6siFNDlUAg==
 
 def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
-    ran = fdp.ConsumeIntInRange(0, 3)
+    ran = 0#fdp.ConsumeIntInRange(0, 3)
     xml_str = fdp.ConsumeBytes(fdp.remaining_bytes())
     xml_str = b'<?xml version="1.0"?><data>' + xml_str + b'</data>'
     try:
@@ -66,18 +66,20 @@ def TestOneInput(data):
         if ran == 0:
             signed = XMLSigner().sign(data, key=key, cert=cert)
             XMLVerifier().validate_schema(signed)
-        elif ran == 1:
-            signed = XMLSigner().sign(data, key=key, cert=cert, always_add_key_value=True)
-            XMLVerifier().get_root(signed)
-        elif ran == 2:
-            signed = XMLSigner().sign(data, key=key, cert=cert, always_add_key_value=False)
+        #elif ran == 1:
+            signed1 = XMLSigner().sign(data, key=key, cert=cert, always_add_key_value=True)
+            XMLVerifier().get_root(signed1)
+        #elif ran == 2:
+            signed2 = XMLSigner().sign(data, key=key, cert=cert, always_add_key_value=False)
             XMLVerifier().schemas()
-            XMLVerifier().get_root(signed)
-            XMLVerifier().get_root(signed)
-        else:
-            signed = XMLSigner().sign(data, key=key, cert=cert)
-            signed_data = etree.tostring(signed)
+            XMLVerifier().get_root(signed2)
+        #else:
+            signed3 = XMLSigner().sign(data, key=key, cert=cert)
+            signed_data = etree.tostring(signed3)
             XMLVerifier().verify(signed_data, ca_pem_file=os.path.dirname(os.path.abspath(__file__)) + '/example-ca.pem')
+
+            signed1 = XMLSigner().sign(data, key=key, cert=cert, always_add_key_value=True)
+            XMLVerifier().get_root(signed1)
     except (XMLSyntaxError, SignXMLException, DocumentInvalid):
         return
     except Exception:
